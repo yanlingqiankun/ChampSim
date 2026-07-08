@@ -109,18 +109,20 @@ NORMAL_CONFIGS=(
   "baseline_cascade_lake_ipcp"
   "baseline_cascade_lake_ipcp_spp_ppf"
   "baseline_cascade_lake_ipcp_hermes_o"
-  # "baseline_cascade_lake_ipcp_spp_ppf_hermes_o"
-  # "baseline_cascade_lake_ipcp_hermes_o_double"
+  "baseline_cascade_lake_ipcp_spp_ppf_hermes_o"
+  "baseline_cascade_lake_ipcp_hermes_o_double"
   "baseline_cascade_lake_ipcp_tlp_layered_core_l1d_f20_-25"
-  # "baseline_cascade_lake_ipcp_iso_prefetcher"
+  "baseline_cascade_lake_ipcp_iso_prefetcher"
+  "baseline_cascade_lake_ipcp_mshr256"
 
   "baseline_cascade_lake_berti"
   "baseline_cascade_lake_berti_spp_ppf"
   "baseline_cascade_lake_berti_hermes_o"
-  # "baseline_cascade_lake_berti_spp_ppf_hermes_o"
-  # "baseline_cascade_lake_berti_hermes_o_double"
+  "baseline_cascade_lake_berti_spp_ppf_hermes_o"
+  "baseline_cascade_lake_berti_hermes_o_double"
   "baseline_cascade_lake_berti_tlp_layered_core_l1d_f20_-25"
-  # "baseline_cascade_lake_berti_iso_prefetcher"
+  "baseline_cascade_lake_berti_iso_prefetcher"
+  "baseline_cascade_lake_berti_mshr256"
 )
 
 NORMAL_BINARIES=(
@@ -133,6 +135,7 @@ NORMAL_BINARIES=(
   "1_cores_cascade_lake_hermes_o_800mtps"
   "1_cores_cascade_lake_tlp_800mtps"
   "1_cores_cascade_lake_800mtps"
+  "1_cores_cascade_lake_800mtps"
 
   "1_cores_cascade_lake_800mtps"
   "1_cores_cascade_lake_800mtps"
@@ -140,6 +143,7 @@ NORMAL_BINARIES=(
   "1_cores_cascade_lake_hermes_o_800mtps"
   "1_cores_cascade_lake_hermes_o_800mtps"
   "1_cores_cascade_lake_tlp_800mtps"
+  "1_cores_cascade_lake_800mtps"
   "1_cores_cascade_lake_800mtps"
 )
 
@@ -150,18 +154,20 @@ CXL_CONFIGS=(
   "baseline_cascade_lake_ipcp"
   "baseline_cascade_lake_ipcp_spp_ppf"
   "baseline_cascade_lake_ipcp_hermes_o"
-  # "baseline_cascade_lake_ipcp_spp_ppf_hermes_o"
-  # "baseline_cascade_lake_ipcp_hermes_o_double"
+  "baseline_cascade_lake_ipcp_spp_ppf_hermes_o"
+  "baseline_cascade_lake_ipcp_hermes_o_double"
   "baseline_cascade_lake_ipcp_tlp_layered_core_l1d_f20_-25"
-  # "baseline_cascade_lake_ipcp_iso_prefetcher"
+  "baseline_cascade_lake_ipcp_iso_prefetcher"
+  "baseline_cascade_lake_ipcp_mshr256"
 
   "baseline_cascade_lake_berti"
   "baseline_cascade_lake_berti_spp_ppf"
   "baseline_cascade_lake_berti_hermes_o"
-  # "baseline_cascade_lake_berti_spp_ppf_hermes_o"
-  # "baseline_cascade_lake_berti_hermes_o_double"
+  "baseline_cascade_lake_berti_spp_ppf_hermes_o"
+  "baseline_cascade_lake_berti_hermes_o_double"
   "baseline_cascade_lake_berti_tlp_layered_core_l1d_f20_-25"
-  # "baseline_cascade_lake_berti_iso_prefetcher"
+  "baseline_cascade_lake_berti_iso_prefetcher"
+  "baseline_cascade_lake_berti_mshr256"
 )
 
 CXL_BINARIES=(
@@ -174,6 +180,7 @@ CXL_BINARIES=(
   "1_cores_cascade_lake_hermes_o_800mtps_cxl"
   "1_cores_cascade_lake_tlp_800mtps_cxl"
   "1_cores_cascade_lake_800mtps_cxl"
+  "1_cores_cascade_lake_800mtps_cxl"
 
   "1_cores_cascade_lake_800mtps_cxl"
   "1_cores_cascade_lake_800mtps_cxl"
@@ -181,6 +188,7 @@ CXL_BINARIES=(
   "1_cores_cascade_lake_hermes_o_800mtps_cxl"
   "1_cores_cascade_lake_hermes_o_800mtps_cxl"
   "1_cores_cascade_lake_tlp_800mtps_cxl"
+  "1_cores_cascade_lake_800mtps_cxl"
   "1_cores_cascade_lake_800mtps_cxl"
 )
 
