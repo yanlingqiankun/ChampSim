@@ -103,6 +103,17 @@ void print_roi_stats(uint32_t cpu, CACHE* cache) {
     // cout << " AVERAGE MISS LATENCY: " <<
     // (cache->total_miss_latency)/TOTAL_MISS << " cycles " <<
     // cache->total_miss_latency << "/" << TOTAL_MISS<< endl;
+
+    uint64_t TOTAL_STALL = 0;
+    for (uint32_t i = 0; i < NUM_TYPES; i++) {
+        TOTAL_STALL += cache->STALL[i];
+    }
+    cout << cache->NAME;
+    cout << " MSHR FULL STALL: " << setw(10) << TOTAL_STALL
+         << " (LOAD: " << setw(10) << cache->STALL[0]
+         << " RFO: " << setw(10) << cache->STALL[1]
+         << " PREFETCH: " << setw(10) << cache->STALL[2]
+         << " WRITEBACK: " << setw(10) << cache->STALL[3] << ")" << endl;
 }
 
 void print_sim_stats(uint32_t cpu, CACHE* cache) {
@@ -376,6 +387,19 @@ int main(int argc, char** argv) {
     tRP = (uint32_t)((1.0 * tRP_DRAM_NANOSECONDS * CPU_FREQ) / 1000);
     tRCD = (uint32_t)((1.0 * tRCD_DRAM_NANOSECONDS * CPU_FREQ) / 1000);
     tCAS = (uint32_t)((1.0 * tCAS_DRAM_NANOSECONDS * CPU_FREQ) / 1000);
+
+#ifdef ENABLE_CXL_LATENCY
+    // Fixed extra latency added on top of the native DRAM timings to
+    // approximate the CXL.mem link round-trip. Configured at build time via
+    // -DCXL_ADDITIONAL_LATENCY_NS (defaults to 80 ns in cpu_config.cmake).
+    CXL_ADDITIONAL_LATENCY_CYCLES = (uint32_t)std::ceil(
+        (1.0 * CXL_ADDITIONAL_LATENCY_NS * CPU_FREQ) / 1000.0);
+    std::cout << (boost::format(
+                      "CXL latency model enabled: +%u ns / +%u CPU cycles per "
+                      "DRAM access") %
+                  CXL_ADDITIONAL_LATENCY_NS % CXL_ADDITIONAL_LATENCY_CYCLES)
+              << std::endl;
+#endif
 
     // default: 16 = (64 / 8) * (3200 / 1600)
     // it takes 16 CPU cycles to tranfser 64B cache block on a 8B (64-bit) bus

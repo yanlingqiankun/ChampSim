@@ -18,6 +18,12 @@ using namespace boost::filesystem;
 // initialized in main.cc
 uint32_t DRAM_MTPS, DRAM_DBUS_RETURN_TIME, tRP, tRCD, tCAS;
 
+#ifdef ENABLE_CXL_LATENCY
+// Definition of the extra CXL round-trip latency (in CPU cycles). Initialized
+// from CXL_ADDITIONAL_LATENCY_NS in main.cc.
+uint32_t CXL_ADDITIONAL_LATENCY_CYCLES = 0;
+#endif
+
 void MEMORY_CONTROLLER::initialize() {
 #if defined(CHAMPSIM_RECORD_DRAM_ACCESSES)
     path trace_name = path(champsim::simulator::instance()->traces()[0])
@@ -277,6 +283,15 @@ void MEMORY_CONTROLLER::schedule(PACKET_QUEUE *queue) {
             LATENCY = tCAS;
         else
             LATENCY = tRP + tRCD + tCAS;
+
+#ifdef ENABLE_CXL_LATENCY
+        // On top of the native DRAM timings, add a fixed CXL link round-trip
+        // delay to every access, regardless of whether it is a row-buffer hit
+        // or miss. This models the protocol/link overhead of a CXL.mem
+        // attached memory pool without perturbing the underlying DRAM
+        // scheduling (banks, row-buffer state, etc.).
+        LATENCY += CXL_ADDITIONAL_LATENCY_CYCLES;
+#endif
 
         uint64_t op_addr = queue->entry[oldest_index].address;
         uint32_t op_cpu = queue->entry[oldest_index].cpu,

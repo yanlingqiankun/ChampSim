@@ -47,6 +47,9 @@ cc::cache::cache()
       _prefetch_overlap(0),
       _prefetch_received(0),
       _total_miss_latency(0),
+      _mshr_max_used(0),
+      _mshr_used_sum(0),
+      _mshr_samples(0),
       _psel_prefetching(0) {
     // Filling the stats container.
     for (std::size_t i = 0; i < CHAMPSIM_CPU_NUMBER_CORE; i++) {
@@ -612,6 +615,12 @@ void cc::cache::reset_stats() {
 
     this->_total_miss_latency = 0;
 
+    // Resetting the MSHR occupancy tracking so that reports only reflect the
+    // ROI (region of interest), not the warmup phase.
+    this->_mshr_max_used = 0;
+    this->_mshr_used_sum = 0;
+    this->_mshr_samples = 0;
+
     this->_pf_requested = 0ULL;
     this->_pf_issued = 0ULL;
     this->_pf_useful = 0ULL;
@@ -728,6 +737,40 @@ void cc::cache::report(std::ostream& os, const size_t& cpu) {
            << std::endl;
     }
 
+    // Print MSHR full stall statistics.
+    {
+        uint64_t total_mshr_stall = 0;
+        uint64_t load_stall = 0, rfo_stall = 0, prefetch_stall = 0, writeback_stall = 0;
+
+        if (is_llc) {
+            load_stall = llc_cs[cc::cache::load].mshr_stall;
+            rfo_stall = llc_cs[cc::cache::rfo].mshr_stall;
+            prefetch_stall = llc_cs[cc::cache::prefetch].mshr_stall;
+            writeback_stall = llc_cs[cc::cache::writeback].mshr_stall;
+        } else {
+            load_stall = this->_stats[cpu][cc::cache::load].mshr_stall;
+            rfo_stall = this->_stats[cpu][cc::cache::rfo].mshr_stall;
+            prefetch_stall = this->_stats[cpu][cc::cache::prefetch].mshr_stall;
+            writeback_stall = this->_stats[cpu][cc::cache::writeback].mshr_stall;
+        }
+        total_mshr_stall = load_stall + rfo_stall + prefetch_stall + writeback_stall;
+
+        os << "MSHR FULL STALL: " << total_mshr_stall
+           << " (LOAD: " << load_stall
+           << " RFO: " << rfo_stall
+           << " PREFETCH: " << prefetch_stall
+           << " WRITEBACK: " << writeback_stall << ")"
+           << std::endl << std::endl;
+    }
+
+    // Print MSHR occupancy statistics (peak and average usage over the ROI).
+    os << "MSHR_SIZE: " << this->mshr_size()
+       << " MSHR_MAX_USED: " << this->mshr_max_used()
+       << " MSHR_AVG_USED: " << this->mshr_avg_used()
+       << " MSHR_AVG_OCCUPANCY_RATIO: " << this->mshr_avg_occupancy_ratio()
+       << std::endl
+       << std::endl;
+
     this->_prefetcher->dump_stats();
 }
 
@@ -755,6 +798,17 @@ void cc::cache::operate() {
     if (this->_prefetch_queue->occupancy && this->_reads_avail_cycle > 0) {
         this->_handle_prefetch();
     }
+
+    // Sampling the MSHR occupancy once per cycle so that we can later report
+    // the peak and average usage (see mshr_max_used() / mshr_avg_used()).
+    std::size_t curr_mshr_used = this->mshr_used();
+
+    if (curr_mshr_used > this->_mshr_max_used) {
+        this->_mshr_max_used = curr_mshr_used;
+    }
+
+    this->_mshr_used_sum += curr_mshr_used;
+    this->_mshr_samples++;
 }
 
 void cc::cache::increment_WQ_FULL(uint64_t address) {}
@@ -1154,6 +1208,25 @@ std::size_t cc::cache::mshr_occupancy() const {
     return std::count_if(
         this->_mshr.begin(), this->_mshr.end(),
         [](const auto& e) -> bool { return (e.address == 0ULL); });
+}
+
+std::size_t cc::cache::mshr_used() const {
+    return this->_mshr.size() - this->mshr_occupancy();
+}
+
+std::size_t cc::cache::mshr_max_used() const { return this->_mshr_max_used; }
+
+double cc::cache::mshr_avg_used() const {
+    if (this->_mshr_samples == 0) return 0.0;
+
+    return static_cast<double>(this->_mshr_used_sum) /
+           static_cast<double>(this->_mshr_samples);
+}
+
+double cc::cache::mshr_avg_occupancy_ratio() const {
+    if (this->_mshr.empty()) return 0.0;
+
+    return this->mshr_avg_used() / static_cast<double>(this->_mshr.size());
 }
 
 uint32_t cc::cache::block_size() const { return BLOCK_SIZE; }

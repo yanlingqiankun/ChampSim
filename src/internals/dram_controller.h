@@ -14,6 +14,10 @@
 #define DRAM_WQ_SIZE 64
 #define DRAM_RQ_SIZE 64
 
+// Native DRAM timings. These reflect the DRAM device itself and are not
+// affected by whether the memory sits behind a CXL link or not: on a real
+// CXL.mem attached DIMM, the DRAM chip timings are unchanged, only the link
+// round-trip is added on top. See CXL_ADDITIONAL_LATENCY_* below.
 #define tRP_DRAM_NANOSECONDS  12.5
 #define tRCD_DRAM_NANOSECONDS 12.5
 #define tCAS_DRAM_NANOSECONDS 12.5
@@ -21,6 +25,14 @@
 // the data bus must wait this amount of time when switching between reads and writes, and vice versa
 #define DRAM_DBUS_TURN_AROUND_TIME ((15*CPU_FREQ)/2000) // 7.5 ns
 extern uint32_t DRAM_MTPS, DRAM_DBUS_RETURN_TIME;
+
+#ifdef ENABLE_CXL_LATENCY
+// Fixed extra latency (expressed in CPU cycles) added to every DRAM access to
+// approximate the round-trip through a CXL.mem link. Computed once at start-up
+// from CXL_ADDITIONAL_LATENCY_NS (see main.cc) so we don't redo the
+// nanosecond-to-cycle conversion on every scheduling decision.
+extern uint32_t CXL_ADDITIONAL_LATENCY_CYCLES;
+#endif
 
 // these values control when to send out a burst of writes
 #define DRAM_WRITE_HIGH_WM    ((DRAM_WQ_SIZE*7)>>3) // 7/8th

@@ -1325,6 +1325,9 @@ void cc::sectored_cache::_handle_read() {
             } else if (mshr_entry == this->_mshr.end() &&
                        mshr_full) {  // New miss but the MSHR is full.
                 continue_read = false;
+                this->_stats[read_cpu]
+                            [static_cast<cc::cache::access_types>(curr_packet.type)]
+                                .mshr_stall++;
             } else {  // This miss already exist. Thus we merge them.
                 this->merge_mshr_on_read(curr_packet, mshr_entry);
             }
@@ -1573,6 +1576,9 @@ void cc::sectored_cache::_handle_writeback() {
                     // No space available in the MSHR. We have to drop the
                     // process until there is space available.
                     continue_write = false;
+                    this->_stats[writeback_cpu]
+                                [static_cast<cc::cache::access_types>(curr_packet.type)]
+                                    .mshr_stall++;
                 } else {  // Already in-flight miss.
                     this->merge_mshr_on_writeback(curr_packet, mshr_entry);
                 }
@@ -1940,6 +1946,9 @@ void cc::sectored_cache::_handle_prefetch() {
             } else if (mshr_entry == this->_mshr.end() &&
                        mshr_full) {  // New miss but the MSHR is full.
                 continue_prefetch = false;
+                this->_stats[prefetch_cpu]
+                            [static_cast<cc::cache::access_types>(curr_packet.type)]
+                                .mshr_stall++;
             } else {  // This miss already exist. Thus we merge them.
                 this->merge_mshr_on_prefetch(curr_packet, mshr_entry);
             }

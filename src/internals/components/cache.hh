@@ -125,6 +125,8 @@ class cache : public memory_system, public MEMORY {
 
         uint64_t pf_requested, pf_issued, pf_useful, pf_useless, pf_fill;
 
+        uint64_t mshr_stall;  // Number of stalls due to MSHR being full
+
         cache_stats()
             : access(0),
               hit(0),
@@ -143,7 +145,8 @@ class cache : public memory_system, public MEMORY {
               pf_issued(0),
               pf_useful(0),
               pf_useless(0),
-              pf_fill(0) {}
+              pf_fill(0),
+              mshr_stall(0) {}
 
         void clear() {
             std::tie(this->access, this->hit, this->miss, this->loc_hit,
@@ -152,9 +155,9 @@ class cache : public memory_system, public MEMORY {
                      this->irreg_data_hit, this->irreg_data_miss,
                      this->bypass_pred, this->no_bypass_pred,
                      this->pf_requested, this->pf_issued, this->pf_useful,
-                     this->pf_useless, this->pf_fill) =
+                     this->pf_useless, this->pf_fill, this->mshr_stall) =
                 std::make_tuple(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                0, 0);
+                                0, 0, 0);
         }
 
         cache_stats operator+(const cache_stats& o) const {
@@ -178,6 +181,7 @@ class cache : public memory_system, public MEMORY {
             r.pf_useful = this->pf_useful + o.pf_useful;
             r.pf_useless = this->pf_useless + o.pf_useless;
             r.pf_fill = this->pf_fill + o.pf_fill;
+            r.mshr_stall = this->mshr_stall + o.mshr_stall;
 
             return r;
         }
@@ -201,6 +205,7 @@ class cache : public memory_system, public MEMORY {
             this->pf_useful += o.pf_useful;
             this->pf_useless += o.pf_useless;
             this->pf_fill += o.pf_fill;
+            this->mshr_stall += o.mshr_stall;
 
             return *this;
         }
@@ -237,6 +242,11 @@ class cache : public memory_system, public MEMORY {
         _prefetch_received, _prefetch_overlap;
 
     uint64_t _total_miss_latency;
+
+    // MSHR occupancy tracking (sampled once per cycle in operate()).
+    std::size_t _mshr_max_used;
+    uint64_t _mshr_used_sum;
+    uint64_t _mshr_samples;
 
     uint64_t _psel_prefetching, _psel_threshold, _psel_max;
     std::vector<uint64_t> _pref_pfn_table;
@@ -363,6 +373,16 @@ class cache : public memory_system, public MEMORY {
     uint32_t processed_queue_occupancy() const, processed_queue_size() const;
 
     std::size_t mshr_size() const, mshr_occupancy() const;
+
+    // Number of MSHR entries currently in use (i.e., the complement of
+    // mshr_occupancy(), which despite its name counts *free* entries).
+    std::size_t mshr_used() const;
+
+    // Peak and average MSHR usage observed since the last reset_stats(),
+    // sampled once per cycle from operate().
+    std::size_t mshr_max_used() const;
+    double mshr_avg_used() const;
+    double mshr_avg_occupancy_ratio() const;
 
     virtual uint32_t block_size() const;
     uint32_t log2_block_size() const;

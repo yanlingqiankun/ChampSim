@@ -7,6 +7,8 @@ set(ENABLE_FSP OFF CACHE BOOL "Is the FSP component enabled?")
 set(ENABLE_DELAYED_FSP OFF CACHE BOOL "Is the FSP component delaying prediction consumption to the L1D?")
 set(ENABLE_BIMODAL_FSP OFF CACHE BOOL "Is the FSP intended to behave following a bimodal policy?")
 set(ENABLE_SSP OFF CACHE BOOL "Is teh SSP component enabled?")
+set(ENABLE_CXL_LATENCY OFF CACHE BOOL "Enable CXL memory latency model (adds a fixed extra delay to every DRAM access to approximate the CXL.mem link round-trip).")
+set(CXL_ADDITIONAL_LATENCY_NS "80" CACHE STRING "Extra latency (in nanoseconds) added to every DRAM access when ENABLE_CXL_LATENCY is ON. Models the CXL link/protocol overhead on top of native DRAM timings.")
 
 set(LEGACY_TRACE OFF CACHE BOOL "Enable legacy trace format.")
 
@@ -48,6 +50,17 @@ endif ()
 
 if (${ENABLE_SSP})
   add_definitions(-DENABLE_SSP=${ENABLE_SSP})
+endif ()
+
+if (${ENABLE_CXL_LATENCY})
+  # Sanity-check the extra latency value. It must be a strictly positive integer
+  # (nanoseconds). A value of zero would be equivalent to disabling the feature.
+  if (NOT "${CXL_ADDITIONAL_LATENCY_NS}" MATCHES "^[0-9]+$")
+    message (FATAL_ERROR "CXL_ADDITIONAL_LATENCY_NS must be a non-negative integer, got: ${CXL_ADDITIONAL_LATENCY_NS}")
+  endif ()
+
+  add_definitions(-DENABLE_CXL_LATENCY)
+  add_definitions(-DCXL_ADDITIONAL_LATENCY_NS=${CXL_ADDITIONAL_LATENCY_NS})
 endif ()
 
 if (${LEGACY_TRACE})
